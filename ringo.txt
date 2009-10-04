@@ -1,0 +1,38 @@
+[03:42:04] <BinaryBrain.> byte 0x68
+[03:42:08] <BinaryBrain.> dword PktAddr 
+[03:42:13] <BinaryBrain.> byte 0x68
+[03:42:15] <BinaryBrain.> dword PkyLen
+[03:42:23] <BinaryBrain.> byte 0x68
+[03:42:26] <BinaryBrain.> dword SocketHandle
+[03:42:38] <Hdx> how would i get PktAddr and PktLen?
+[03:42:39] <BinaryBrain.> word 0x15FF
+[03:42:47] <BinaryBrain.> dword address of SendGenericPacket 
+[03:42:58] <BinaryBrain.> byte 0xC2
+[03:43:01] <BinaryBrain.> word 0x08
+
+
+[03:45:45] <BinaryBrain.> push [esp+4]
+[03:45:50] <BinaryBrain.> push [esp+8]
+[03:45:53] <BinaryBrain.> push sockethandle
+[03:45:59] <BinaryBrain.> call the function u wanna call
+[03:46:01] <BinaryBrain.> retn 8
+
+
+
+[03:57:08] <BinaryBrain.> FF 74 24 04 
+[03:57:13] <BinaryBrain.> FF 74 24 08  
+[03:57:26] <BinaryBrain.> 68 XX XX XX XX 
+[03:57:40] <BinaryBrain.> FF 15 YY YY YY YY
+[03:57:41] <BinaryBrain.> C2 08 00
+[03:57:49] <BinaryBrain.> where XX XX XX XX is the value of sockethandle
+[03:57:55] <Hdx> what compiler do you user?
+[03:57:57] <BinaryBrain.> and YY YY YY YY is the address of the function to call
+
+
+[04:00:42] <BinaryBrain.> mem = FF 74 24 04 FF 74 24 08 68 0B AD C0 DE FF 15 0B AD C0 DE C2 08 00
+[04:01:06] <BinaryBrain.> copymemory(mem+9, value_of_sockethandle, 4)
+[04:01:25] <BinaryBrain.> copymemory(mem+15, address_of_function, 4)
+
+FF 74 24 04 
+FF 15 0B AD C0 DE 
+C2 08 00

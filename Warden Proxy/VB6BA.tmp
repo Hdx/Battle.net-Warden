@@ -1,0 +1,416 @@
+VERSION 5.00
+Object = "{248DD890-BB45-11CF-9ABC-0080C7E7B78D}#1.0#0"; "mswinsck.ocx"
+Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "richtx32.ocx"
+Begin VB.Form frmMain 
+   Caption         =   "Hdx Warden Proxy"
+   ClientHeight    =   4995
+   ClientLeft      =   60
+   ClientTop       =   345
+   ClientWidth     =   7230
+   BeginProperty Font 
+      Name            =   "Times New Roman"
+      Size            =   8.25
+      Charset         =   0
+      Weight          =   400
+      Underline       =   0   'False
+      Italic          =   0   'False
+      Strikethrough   =   0   'False
+   EndProperty
+   Icon            =   "Form1.frx":0000
+   LinkTopic       =   "Form1"
+   ScaleHeight     =   4995
+   ScaleWidth      =   7230
+   StartUpPosition =   3  'Windows Default
+   Begin VB.CommandButton Command1 
+      Caption         =   "Command1"
+      Height          =   495
+      Left            =   1800
+      TabIndex        =   1
+      Top             =   1440
+      Width           =   1215
+   End
+   Begin MSWinsockLib.Winsock wsClient 
+      Left            =   3360
+      Top             =   2280
+      _ExtentX        =   741
+      _ExtentY        =   741
+      _Version        =   393216
+   End
+   Begin RichTextLib.RichTextBox rtbChat 
+      Height          =   735
+      Left            =   1560
+      TabIndex        =   0
+      Top             =   1200
+      Width           =   1575
+      _ExtentX        =   2778
+      _ExtentY        =   1296
+      _Version        =   393217
+      BackColor       =   0
+      ReadOnly        =   -1  'True
+      ScrollBars      =   2
+      Appearance      =   0
+      TextRTF         =   $"Form1.frx":0E42
+      BeginProperty Font {0BE35203-8F91-11CE-9DE3-00AA004BB851} 
+         Name            =   "Consolas"
+         Size            =   8.25
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+   End
+   Begin MSWinsockLib.Winsock wsServer 
+      Left            =   120
+      Top             =   240
+      _ExtentX        =   741
+      _ExtentY        =   741
+      _Version        =   393216
+   End
+End
+Attribute VB_Name = "frmMain"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = False
+Option Explicit
+Private Const WARDEN_RANDOM_CONTEXT_SIZE = 65
+Private Const RC4_LENGTH = &H102
+Private bConnected As Boolean
+Private bProtocolByte As Boolean
+Private inBuff As String
+Private svrBuff As String
+Public warden As clsWarden
+
+
+Private Enum SHA1Versions
+  SHA1 = 0
+  BrokenSHA1 = 1
+  LockdownSHA1 = 2
+  WardenSHA1 = 3
+  Max = &HFFFFFFFF
+End Enum
+
+Private Type SHA1Context
+  IntermediateHash(0 To 4) As Long
+  LengthLow As Long
+  LengthHigh As Long
+  MessageBlockIndex As Integer
+  MessageBlock(0 To 63) As Byte
+  Computed As Byte
+  Corrupted As Byte
+  Version As SHA1Versions
+End Type
+
+Private Type MD5Context
+  IntermediateHash(0 To 3) As Long
+  LengthLow As Long
+  LengthHigh As Long
+  MessageBlockIndex As Integer
+  MessageBlock(0 To 63) As Byte
+  Computed As Byte
+  Corrupted As Byte
+End Type
+
+Private Type MedivRandomContext
+  Index As Long
+  Data(0 To 19) As Byte
+  Source1(0 To 19) As Byte
+  Source2(0 To 19) As Byte
+End Type
+
+
+Private Declare Sub rc4_init Lib "Warden.dll" (ByVal key As String, ByVal Base As String, ByVal length As Long)
+Private Declare Sub rc4_crypt Lib "Warden.dll" (ByVal key As String, ByVal Data As String, ByVal length As Long)
+Private Declare Sub rc4_crypt_data Lib "Warden.dll" (ByVal Data As String, ByVal DataLength As Long, ByVal Base As String, ByVal BaseLength As Long)
+
+Private Declare Function sha1_reset Lib "Warden.dll" (ByRef Context As SHA1Context) As Long
+Private Declare Function sha1_input Lib "Warden.dll" (ByRef Context As SHA1Context, ByVal Data As String, ByVal length As Long) As Long
+Private Declare Function sha1_digest Lib "Warden.dll" (ByRef Context As SHA1Context, ByVal digest As String) As Long
+
+Private Declare Function md5_reset Lib "Warden.dll" (ByRef Context As MD5Context) As Long
+Private Declare Function md5_input Lib "Warden.dll" (ByRef Context As MD5Context, ByVal Data As String, ByVal length As Long) As Long
+Private Declare Function md5_digest Lib "Warden.dll" (ByRef Context As MD5Context, ByVal digest As String) As Long
+Private Declare Function md5_verify_data Lib "Warden.dll" (ByVal Data As String, ByVal length As Long, ByVal CorrectMD5 As String) As Boolean
+
+Private Declare Sub mediv_random_init Lib "Warden.dll" (ByRef Context As MedivRandomContext, ByVal seed As String, ByVal length As Long)
+Private Declare Sub mediv_random_get_bytes Lib "Warden.dll" (ByRef Context As MedivRandomContext, ByVal buffer As String, ByVal length As Long)
+
+Private Declare Function module_get_uncompressed_size Lib "Warden.dll" (ByVal Data As String) As Long
+Private Declare Function module_get_prep_size Lib "Warden.dll" (ByVal Data As String) As Long
+Private Declare Function module_decompress Lib "Warden.dll" (ByVal Source As String, ByVal SourceLength As Long, ByVal Destination As String, ByVal DestinationLength As Long) As Long
+
+Private Declare Function module_prep Lib "Warden.dll" (ByVal Source As String, ByVal Callback As Long) As Long
+Private Declare Function module_init Lib "Warden.dll" (ByVal Address As Long, ByVal Callbacks As Long) As Long
+Private Declare Function module_get_init_address Lib "Warden.dll" (ByVal module As Long) As Long
+
+
+
+Private Declare Function GlobalAlloc Lib "kernel32" (ByVal wFlags As Long, ByVal dwBytes As Long) As Long
+Private Declare Function GlobalFree Lib "kernel32" (ByVal hMem As Long) As Long
+Private Declare Function GlobalLock Lib "kernel32" (ByVal hMem As Long) As Long
+Private Declare Sub CopyMemory Lib "kernel32" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal numbytes As Long)
+
+
+Private Sub Command1_Click()
+  Dim x As Long
+  x = module_get_init_address(t_t)
+  AddChat vbYellow, "Attempting to call init at ", vbWhite, "0x", vbWhite, Hex4(t_t + x)
+  
+  AddChat vbYellow, module_init(t_t + x, VarPtr(m_CallBack(7)))
+End Sub
+
+Private Sub Form_load()
+  test
+
+  Dim x As Long
+  Dim temp As String
+  
+  Dim name As String
+  Dim key As String
+  name = "4e7cd1119415858c77fa7ba50c51302d"
+  key = "38c5eb0fffc63e12525c466a7cf53681"
+  
+  'name = "f1eaf8a5b9aecd52b4089f390c9dd575"
+  'key = "8691887b0a1eb18bcebe071a9efe66c5"
+  
+  'name = "1e06c9a0b2acf87366e6a16cd08982b6"
+  'key = "fb63bcd05209c0431d8f7c37d01010a0"
+
+  
+  
+  'Call LoadModule(0, "4e7cd1119415858c77fa7ba50c51302d.temp2")
+  'Exit Sub
+  
+  Open name & ".bin" For Binary Access Read As #1
+    Data = String$(LOF(1), Chr$(0))
+    Get 1, 1, Data
+  Close #1
+  
+  MsgBox "a"
+  If md5_verify_data(Data, Len(Data), HexToStr(name)) Then
+    AddChat vbGreen, "MD5 Passed"
+    Dim Base As String
+    Base = HexToStr(key)
+    rc4_crypt_data Data, Len(Data), Base, Len(Base)
+    If (Mid(Data, Len(Data) - &H103, 4) = "NGIS") Then
+      AddChat vbGreen, "RC4 Passed"
+      x = module_get_uncompressed_size(Data)
+      temp = String$(x, Chr$(0))
+      If (Not module_decompress(Data, Len(Data), temp, x)) Then
+        AddChat vbGreen, "Decompressions Successful"
+        Data = temp
+        temp = vbNullString
+        
+        x = module_get_prep_size(Data)
+        temp = String$(x, Chr$(0))
+        
+        t_t = module_prep(Data, AddressOf DebugCallback)
+        
+        Call CopyMemory(ByVal temp, ByVal t_t, x)
+        AddChat vbYellow, Hex4(t_t) ', vbYellow, vbNewLine, vbYellow, DebugOutput(temp)
+        
+        WriteFile "test.prep", temp
+        
+      Else
+        AddChat vbRed, "Decompression Failed"
+      End If
+    Else
+      AddChat vbRed, "RC4 Failed"
+    End If
+  Else
+    AddChat vbRed, "MD5 Failed"
+  End If
+  
+  
+  'wsServer.Close
+  'wsServer.LocalPort = Val(ReadINI("Main", "Port", "6112", "./Warden.ini"))
+  'wsServer.Listen
+  'Set warden = New clsWarden
+  'AddChat vbBlue, "Welcome to my Warden bypass proxy. If you can't figure out how to work it, to fucking bad."
+  'AddChat vbGreen, "[Server] Listening for connections on port ", vbWhite, wsServer.LocalPort
+End Sub
+
+
+
+Public Sub AddChat(ParamArray saElements() As Variant)
+  Dim i As Integer
+  With rtbChat
+    .SelStart = Len(.Text)
+    .SelLength = 0
+    .SelColor = vbWhite
+    .SelText = "[" & Time & "] "
+    .SelStart = Len(.Text)
+    For i = LBound(saElements) To UBound(saElements) Step 2
+      .SelStart = Len(.Text)
+      .SelLength = 0
+      .SelColor = saElements(i)
+      .SelText = saElements(i + 1) & Left$(vbCrLf, -2 * CLng((i + 1) = UBound(saElements)))
+      .SelStart = Len(.Text)
+    Next i
+  End With
+End Sub
+
+Private Sub Print_Random_Context(ctx As String)
+  Dim tmp(0 To 4) As Long
+  Dim stmp As String
+  
+  CopyMemory tmp(0), ByVal ctx, 4
+  Debug.Print "Position: " & tmp(0)
+  
+  stmp = Mid(ctx, 5, 20)
+  CopyMemory tmp(0), ByVal stmp, 20
+  Debug.Print "Data: " & LCase(HexL(tmp(0)) & " " & HexL(tmp(1)) & " " & HexL(tmp(2)) & " " & HexL(tmp(3)) & " " & HexL(tmp(4)))
+  
+  stmp = Mid(ctx, 25, 20)
+  CopyMemory tmp(0), ByVal stmp, 20
+  Debug.Print "Source 1: " & LCase(HexL(tmp(0)) & " " & HexL(tmp(1)) & " " & HexL(tmp(2)) & " " & HexL(tmp(3)) & " " & HexL(tmp(4)))
+  
+  stmp = Mid(ctx, 45, 20)
+  CopyMemory tmp(0), ByVal stmp, 20
+  Debug.Print "Source 2: " & LCase(HexL(tmp(0)) & " " & HexL(tmp(1)) & " " & HexL(tmp(2)) & " " & HexL(tmp(3)) & " " & HexL(tmp(4)))
+  
+End Sub
+
+Private Sub Form_Resize()
+  rtbChat.Left = 0
+  rtbChat.Top = 0
+  rtbChat.Width = Me.ScaleWidth
+  rtbChat.Height = Me.ScaleHeight
+End Sub
+
+Private Sub wsClient_Close()
+  AddChat vbRed, "[Client] Connection closed"
+  wsServer.Close
+  Call wsServer_Close
+End Sub
+
+Private Sub wsClient_Connect()
+  AddChat vbGreen, "[Client] Connected"
+  wsServer.SendData Chr$(0) & Chr$(&H5A) & Chr$(0) & Chr$(0) & Chr$(0) & Chr$(0) & Chr$(0) & Chr$(0)
+End Sub
+
+Private Sub wsClient_DataArrival(ByVal bytesTotal As Long)
+  Dim sTemp As String
+  Dim i As Long
+  wsClient.GetData sTemp
+  svrBuff = svrBuff & sTemp
+  
+  If (Len(svrBuff) < 4) Then Exit Sub
+  Do While (Len(svrBuff) >= 4)
+    i = Asc(Mid(svrBuff, 3, 1))
+    i = i + (Asc(Mid(svrBuff, 4, 1)) * &H100)
+    
+    If (Len(svrBuff) < i) Then Exit Sub
+    
+    Call HandleClientPacket(Left(svrBuff, i))
+    svrBuff = Mid(svrBuff, i + 1)
+  Loop
+End Sub
+
+Private Sub wsClient_Error(ByVal Number As Integer, Description As String, ByVal Scode As Long, ByVal Source As String, ByVal HelpFile As String, ByVal HelpContext As Long, CancelDisplay As Boolean)
+  AddChat vbRed, "[Client][Error] #", vbWhite, Number, vbRed, ": ", vbRed, Description
+  wsClient.Close
+  wsServer.Close
+  wsServer_Close
+End Sub
+
+Private Sub wsServer_Close()
+  wsServer.Close
+  wsClient.Close
+  AddChat vbRed, "[Server] Connection closed"
+  inBuff = vbNullString
+  svrBuff = vbNullString
+  bConnected = False
+  bProtocolByte = False
+  warden.Reset
+  wsServer.Listen
+  AddChat vbGreen, "[Server] Listening for connections on port ", vbWhite, wsServer.LocalPort
+End Sub
+
+Private Sub wsServer_ConnectionRequest(ByVal requestID As Long)
+  wsServer.Close
+  wsServer.Accept requestID
+  AddChat vbGreen, "[Server] New connection from ", vbWhite, wsServer.RemoteHostIP, vbGreen, ":", vbWhite, wsServer.RemotePort
+End Sub
+
+Private Sub wsServer_DataArrival(ByVal bytesTotal As Long)
+  Dim sTemp As String
+  Dim i As Long
+  Dim sIP As String
+  
+  wsServer.GetData sTemp
+  inBuff = inBuff & sTemp
+  
+  If (bConnected = False) Then
+    If (Len(inBuff) < 9) Then Exit Sub
+    i = Asc(Mid(inBuff, 4, 1))
+    i = i + (Asc(Mid(inBuff, 3, 1)) * &H100)
+    sIP = Asc(Mid(inBuff, 5, 1)) & "." & Asc(Mid(inBuff, 6, 1)) & "." & Asc(Mid(inBuff, 7, 1)) & "." & Asc(Mid(inBuff, 8, 1))
+    AddChat vbGreen, "[Server] Received Socks connection: ", vbWhite, sIP, vbGreen, ":", vbWhite, i
+    wsClient.Close
+    wsClient.Connect sIP, i
+    inBuff = Mid(inBuff, 10)
+    bConnected = True
+  Else
+    If (bProtocolByte = False) Then
+      wsClient.SendData Left(inBuff, 1)
+      inBuff = Mid(inBuff, 2)
+      bProtocolByte = True
+    End If
+    
+    Do While (Len(inBuff) >= 4)
+      i = Asc(Mid(inBuff, 3, 1))
+      i = i + (Asc(Mid(inBuff, 4, 1)) * &H100)
+      HandleServerPacket Left(inBuff, i)
+      inBuff = Mid(inBuff, i + 1)
+    Loop
+  End If
+End Sub
+
+Private Sub wsServer_Error(ByVal Number As Integer, Description As String, ByVal Scode As Long, ByVal Source As String, ByVal HelpFile As String, ByVal HelpContext As Long, CancelDisplay As Boolean)
+  AddChat vbRed, "[Server][Error] #", vbWhite, Err.Number, vbRed, ": ", vbRed, Err.Description
+  wsServer.Close
+End Sub
+
+Sub HandleServerPacket(sData As String)
+  Dim ID As Integer
+  ID = Asc(Mid(sData, 2, 1))
+  Select Case ID
+    Case &H50
+      warden.game_client = Mid$(sData, 13, 4)
+      wsClient.SendData sData
+    Case &H51
+      Call warden.Init_Crypts(Mid$(sData, 41, 4))
+      wsClient.SendData sData
+    Case Else
+      'AddChat vbGreen, "Received packet from bot: ", vbWhite, "0x", vbWhite, Right("00" & Hex(ID), 2), vbWhite, vbNewLine, vbWhite, DebugOutput(sData)
+      wsClient.SendData sData
+  End Select
+End Sub
+
+Private Sub HandleClientPacket(sData As String)
+  Dim ID As Integer
+  ID = Asc(Mid(sData, 2, 1))
+  Select Case ID
+    Case &H5E
+      'AddChat vbGreen, "Received packet from Server: ", vbWhite, "0x", vbWhite, Right("00" & Hex(ID), 2)
+      Call warden.Packet_Data(Mid(sData, 5))
+    Case Else
+      'AddChat vbGreen, "Received packet from Server: ", vbWhite, "0x", vbWhite, Right("00" & Hex(ID), 2), vbWhite, vbNewLine, vbWhite, DebugOutput(sData)
+      wsServer.SendData sData
+  End Select
+End Sub
+
+Public Sub SendChatEvent(dwEID As Long, sUsername As String, sText As String)
+  Dim buf As New clsBuffer
+  buf.Push DWORD, dwEID
+  buf.Push DWORD, 9
+  buf.Push DWORD, -5000
+  buf.Push DWORD, 0
+  buf.Push DWORD, 0
+  buf.Push DWORD, 0
+  buf.Push NTString, sUsername
+  buf.Push NTString, sText
+  wsServer.SendData buf.GetPacket(BNCS, &HF)
+End Sub

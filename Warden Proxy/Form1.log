@@ -1,0 +1,4 @@
+Line 25: Class InetCtlsObjects.Inet of control inet was not a loaded control class.
+Line 32: Class MSWinsockLib.Winsock of control wsClient was not a loaded control class.
+Line 39: Class RichTextLib.RichTextBox of control rtbChat was not a loaded control class.
+Line 63: Class MSWinsockLib.Winsock of control wsServer was not a loaded control class.
