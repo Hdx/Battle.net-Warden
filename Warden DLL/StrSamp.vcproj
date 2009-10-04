@@ -225,6 +225,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\crevlockdown.c"
+				>
+			</File>
+			<File
 				RelativePath=".\crevold.c"
 				>
 			</File>
@@ -279,6 +283,10 @@
 			</File>
 			<File
 				RelativePath=".\crev.h"
+				>
+			</File>
+			<File
+				RelativePath=".\crevlockdown.h"
 				>
 			</File>
 			<File

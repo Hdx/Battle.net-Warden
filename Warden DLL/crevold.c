@@ -6,42 +6,6 @@
 	fclose(fp);
 }*/
 
-uint32_t get_file_size(uint8_t *file){
-	FILE *fp;
-	uint32_t len;
-
-	fopen_s(&fp, file, "r");
-	if(fp == NULL) return 0;
-
-	fseek(fp, 0, SEEK_END);
-	len = ftell(fp);
-	fclose(fp);
-	return len;
-}
-
-uint32_t get_file_data(uint8_t *file, uint8_t *data, uint32_t size, uint32_t padd){
-	FILE *fp;
-	uint32_t lret;
-	uint32_t x = 0;
-	uint8_t  b_pad = 0xFF;
-
-	fopen_s(&fp, file, "rb");
-	if(fp == NULL) return 0;
-
-	lret = fread(data, 1, size, fp);
-	if(lret != size){
-		if((padd == 1) && (feof(fp) != 0)){
-			for(x = lret; x < size; x++)
-				data[x] = b_pad--;
-		}else{
-			return 1;
-		}
-	}
-
-	fclose(fp);
-	return 0;
-}
-
 uint32_t __stdcall crev_ver1(uint8_t *archive_time, uint8_t *archive_name, uint8_t *seed, uint8_t *ini_file, uint8_t *ini_header, uint32_t *version, uint32_t *checksum, uint8_t *result){
 	return crev_old(0, archive_name[7] - '0', seed, ini_file, ini_header, version, checksum, result);
 }
@@ -199,34 +163,6 @@ uint32_t __stdcall crev_old(uint32_t padd, uint8_t archive_ver, uint8_t *seed, u
 	}
 
 	return S;
-}
-
-uint32_t crev_get_file_version(uint8_t *file){
-	uint32_t info_size;
-	uint8_t *data;
-	uint32_t version;
-	VS_FIXEDFILEINFO *ffi;
-	info_size = GetFileVersionInfoSize(file, NULL);
-
-	if(info_size == 0) return 0;
-	data = safe_malloc(info_size);
-
-	if(GetFileVersionInfo(file, (DWORD)NULL, info_size, (uint8_t*)data) == 0){
-		free(data);
-		return 0;
-	}
-
-	if(!VerQueryValue(data, "\\", (LPVOID*)&ffi, &info_size)){
-		free(data);
-		return 0;
-	}
-
-	version = ((ffi->dwProductVersionMS & 0x00FF0000) <<  8) |
-			  ((ffi->dwProductVersionMS & 0x000000FF) << 16) |
-			  ((ffi->dwProductVersionLS & 0x00FF0000) >>  8) |
-			  (ffi->dwProductVersionLS & 0x000000FF);
-	free(data);
-	return version;
 }
 
 uint32_t crev_get_file_information(uint8_t *file, uint8_t *buffer, uint32_t size){

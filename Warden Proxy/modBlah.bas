@@ -96,6 +96,17 @@ Dim Temp As String, I As Long
   Next I
   HexToStr = Temp
 End Function
+
+Public Function StrToHex(ByVal sData As String, Optional ByVal NoSpaces As Boolean = False) As String
+    Dim sRet As String
+    Dim I As Integer
+    
+    For I = 1 To Len(sData)
+        sRet = StringFormat("{0}{1}{2}", sRet, IIf(NoSpaces Or I = 1, vbNullString, Space$(1)), ZeroOffset(Asc(Mid(sData, I, 1)), 2))
+    Next I
+        
+    StrToHex = sRet
+End Function
 Public Function ZeroOffset(lData As Long, iLen As Integer) As String
     ZeroOffset = Right$(String$(iLen, "0") & Hex(lData), iLen)
 End Function

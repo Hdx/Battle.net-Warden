@@ -108,41 +108,32 @@ Public Sub TestCRev()
     Dim sFileTime As String
     Dim sFileName As String
     Dim sSeed     As String
-    sFileTime = HexToStr("0031EF00705FC701")
-    sFileName = "ver-IX86-5.mpq"
-    sSeed = "A=1309005226 C=1705134259 B=4173766578 4 A=A-S B=B-C C=C^A A=A-B"
-    'Version  = 0x011801E6
-    'Checksum = 0x31EB10D4
-    'Result   = war3.exe 07/07/09 21:20:52 471040
+    sFileTime = HexToStr("005E2002705FC701")
+    sFileName = "lockdown-IX86-07.mpq"
+    sSeed = HexToStr("03E3321E7CFD23EDAE2E39196EA26D81")
+    'Version  = 0x01100101
+    'Checksum = 0x5E6B533E
+    'Result   = 63AD811B448929FF407C549D81859F3E
 
     Dim lRet      As Long
     Dim lVersion  As Long
     Dim lChecksum As Long
     Dim sResult   As String
-    Dim i         As Integer
+    Dim I         As Integer
     
     
     sResult = String$(crev_max_result, Chr$(0))
     
-    lRet = check_revision(sFileTime, sFileName, sSeed, App.Path & "\Warden.ini", "CRev_WAR3", lVersion, lChecksum, sResult)
-    i = InStr(1, sResult, Chr$(0))
-    sResult = Left$(sResult, i)
+    lRet = check_revision(sFileTime, sFileName, sSeed, App.Path & "\CheckRevision.ini", "CRev_SC", lVersion, lChecksum, sResult)
+    I = InStr(1, sResult, Chr$(0))
+    sResult = Left$(sResult, I)
     
-    Debug.Print StringFormat("Max Result: {0}", crev_max_result)
     Debug.Print StringFormat("Return:     {0}", lRet)
-    Debug.Print StringFormat("Version:    0x{0} 0x011801E6", ZeroOffset(lVersion, 8))
-    Debug.Print StringFormat("Checksum:   0x{0} 0x31EB10D4", ZeroOffset(lChecksum, 8))
-    Debug.Print StringFormat("Result:     {0}", sResult)
-    
-    Dim x As Integer
-    For x = 0 To 10
-        sResult = String$(crev_max_result, Chr$(0))
-        lRet = crev_error_description(x, sResult, Len(sResult))
-        i = InStr(1, sResult, Chr$(0))
-        If (i > 0) Then sResult = Left$(sResult, i)
-        Debug.Print StringFormat("Result:     {0}", sResult)
-    Next x
-    
+    Debug.Print StringFormat("Version:    0x{0} 0x01100101", ZeroOffset(lVersion, 8))
+    Debug.Print StringFormat("Checksum:   0x{0} 0x5E6B533E", ZeroOffset(lChecksum, 8))
+    Debug.Print StringFormat("Result:     {0}", StrToHex(sResult, True))
+    Debug.Print StringFormat("            63AD811B448929FF407C549D81859F3E")
+
 End Sub
 '======================================================================================================
 Public Sub WardenCleanup(Instance As Long)

@@ -24,6 +24,5 @@ uint32_t __stdcall crev_old(
 	uint32_t *version, uint32_t *checksum, uint8_t *result);
 
 uint32_t crev_get_file_version(uint8_t *file);
-uint32_t crev_get_file_information(uint8_t *file, uint8_t *buffer, uint32_t size);
 
 #endif

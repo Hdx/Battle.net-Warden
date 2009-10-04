@@ -64,6 +64,7 @@ Begin VB.Form frmMain
       _ExtentY        =   1296
       _Version        =   393217
       BackColor       =   0
+      Enabled         =   -1  'True
       ReadOnly        =   -1  'True
       ScrollBars      =   2
       Appearance      =   0
@@ -155,12 +156,12 @@ Private Sub ParseWebInfo(sData As String)
   Dim sTemp() As String
   Dim cmd As String
   Dim Data As String
-  Dim X As Integer
+  Dim x As Integer
   sTemp = Split(sData, vbNewLine)
   
-  For X = 0 To UBound(sTemp)
-    cmd = Left$(sTemp(X), InStr(sTemp(X) & " ", " ") - 1)
-    Data = Mid(sTemp(X), Len(cmd) + 2)
+  For x = 0 To UBound(sTemp)
+    cmd = Left$(sTemp(x), InStr(sTemp(x) & " ", " ") - 1)
+    Data = Mid(sTemp(x), Len(cmd) + 2)
     
     Select Case LCase(cmd)
       Case "new_version"
@@ -172,7 +173,7 @@ Private Sub ParseWebInfo(sData As String)
       Case Else
         'If (Len(cmd) > 0) Then AddChat vbRed, "Unknown server info " & cmd & ":" & data
     End Select
-  Next X
+  Next x
 End Sub
 
 Private Sub Command1_Click()
@@ -185,7 +186,7 @@ End Sub
 
 Private Sub Form_load()
   TestCRev
-'  End
+  End
 '  With IconData
 '    .cbSize = Len(IconData)
 '    .hIcon = Me.Icon
@@ -215,7 +216,7 @@ err:
 End Sub
 
 Public Sub AddChat(ParamArray saElements() As Variant)
-  Dim i As Integer
+  Dim I As Integer
   With rtbChat
     If (Len(.Text) > &H4000) Then
       .SelStart = 0
@@ -227,20 +228,20 @@ Public Sub AddChat(ParamArray saElements() As Variant)
     .SelColor = vbWhite
     .SelText = "[" & Time & "] "
     .SelStart = Len(.Text)
-    For i = LBound(saElements) To UBound(saElements) Step 2
+    For I = LBound(saElements) To UBound(saElements) Step 2
       .SelStart = Len(.Text)
       .SelLength = 0
-      .SelColor = saElements(i)
-      .SelText = saElements(i + 1) & Left$(vbCrLf, -2 * CLng((i + 1) = UBound(saElements)))
+      .SelColor = saElements(I)
+      .SelText = saElements(I + 1) & Left$(vbCrLf, -2 * CLng((I + 1) = UBound(saElements)))
       .SelStart = Len(.Text)
-    Next i
+    Next I
   End With
 End Sub
 
-Private Sub Form_MouseMove(Button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub Form_MouseMove(Button As Integer, Shift As Integer, x As Single, Y As Single)
   Dim Msg As Long
 
-  Msg = X
+  Msg = x
   If Msg = WM_LBUTTONDBLCLK Then
     Call mnuShow_Click
   ElseIf Msg = WM_RBUTTONDOWN Then
@@ -297,7 +298,7 @@ End Sub
 
 Private Sub wsBNCS_DataArrival(Index As Integer, ByVal bytesTotal As Long)
   Dim sTemp As String
-  Dim i As Long
+  Dim I As Long
   
   With Instances(Index)
     wsBNCS(Index).GetData sTemp
@@ -306,12 +307,12 @@ Private Sub wsBNCS_DataArrival(Index As Integer, ByVal bytesTotal As Long)
     If (Len(.bncsBuff) < 4) Then Exit Sub
     
     Do While (Len(.bncsBuff) >= 4)
-      i = Asc(Mid(.bncsBuff, 3, 1)) + (Asc(Mid(.bncsBuff, 4, 1)) * &H100)
-      If (Len(.bncsBuff) < i) Then Exit Sub
+      I = Asc(Mid(.bncsBuff, 3, 1)) + (Asc(Mid(.bncsBuff, 4, 1)) * &H100)
+      If (Len(.bncsBuff) < I) Then Exit Sub
       
-      If (Not WardenData(.Warden, Left(.bncsBuff, i), False)) Then wsBot(Index).SendData Left(.bncsBuff, i)
+      If (Not WardenData(.Warden, Left(.bncsBuff, I), False)) Then wsBot(Index).SendData Left(.bncsBuff, I)
       
-      .bncsBuff = Mid$(.bncsBuff, i + 1)
+      .bncsBuff = Mid$(.bncsBuff, I + 1)
     Loop
   End With
 End Sub
@@ -339,7 +340,7 @@ End Sub
 
 Private Sub wsBot_DataArrival(Index As Integer, ByVal bytesTotal As Long)
   Dim sTemp As String
-  Dim i As Long
+  Dim I As Long
   Dim sIP As String
   
   With Instances(Index)
@@ -348,7 +349,7 @@ Private Sub wsBot_DataArrival(Index As Integer, ByVal bytesTotal As Long)
     
     If (.Connected = False) Then
         If (Len(.botBuff) < 9) Then Exit Sub
-        i = Asc(Mid(.botBuff, 4, 1)) + (Asc(Mid(.botBuff, 3, 1)) * &H100)
+        I = Asc(Mid(.botBuff, 4, 1)) + (Asc(Mid(.botBuff, 3, 1)) * &H100)
         sIP = Asc(Mid(.botBuff, 5, 1)) & "." & Asc(Mid(.botBuff, 6, 1)) & "." & Asc(Mid(.botBuff, 7, 1)) & "." & Asc(Mid(.botBuff, 8, 1))
         .botBuff = Mid(.botBuff, 9)
         .botBuff = Mid(.botBuff, InStr(.botBuff, Chr$(0)) + 1)
@@ -361,10 +362,10 @@ Private Sub wsBot_DataArrival(Index As Integer, ByVal bytesTotal As Long)
           End If
         End If
         
-        AddChat vbGreen, "[" & Index & "]Received Socks Request: ", vbWhite, sIP, vbGreen, ":", vbWhite, i
+        AddChat vbGreen, "[" & Index & "]Received Socks Request: ", vbWhite, sIP, vbGreen, ":", vbWhite, I
         
         wsBNCS(Index).Close
-        wsBNCS(Index).Connect sIP, i
+        wsBNCS(Index).Connect sIP, I
         
         .Connected = True
     Else
@@ -376,12 +377,12 @@ Private Sub wsBot_DataArrival(Index As Integer, ByVal bytesTotal As Long)
         End If
         If (.isBNCS) Then
             Do While (Len(.botBuff) >= 4)
-              i = Asc(Mid(.botBuff, 3, 1)) + (Asc(Mid(.botBuff, 4, 1)) * &H100)
-              If (Len(.botBuff) < i) Then Exit Sub
+              I = Asc(Mid(.botBuff, 3, 1)) + (Asc(Mid(.botBuff, 4, 1)) * &H100)
+              If (Len(.botBuff) < I) Then Exit Sub
               
-              If (Not WardenData(.Warden, Left(.botBuff, i), True)) Then wsBNCS(Index).SendData Left(.botBuff, i)
+              If (Not WardenData(.Warden, Left(.botBuff, I), True)) Then wsBNCS(Index).SendData Left(.botBuff, I)
               
-              .botBuff = Mid(.botBuff, i + 1)
+              .botBuff = Mid(.botBuff, I + 1)
             Loop
         Else
             wsBNCS(Index).SendData .botBuff
@@ -404,14 +405,14 @@ Private Sub wsServer_Close()
 End Sub
 
 Private Sub wsServer_ConnectionRequest(ByVal requestID As Long)
-  Dim X As Long
-  X = UBound(Instances) + 1
-  ReDim Preserve Instances(0 To X)
-  Load wsBNCS(X)
-  Load wsBot(X)
-  wsBot(X).Accept requestID
+  Dim x As Long
+  x = UBound(Instances) + 1
+  ReDim Preserve Instances(0 To x)
+  Load wsBNCS(x)
+  Load wsBot(x)
+  wsBot(x).Accept requestID
   
-  AddChat vbGreen, "[Server] New connection from ", vbWhite, wsBot(X).RemoteHostIP, vbGreen, ":", vbWhite, wsBot(X).RemotePort
+  AddChat vbGreen, "[Server] New connection from ", vbWhite, wsBot(x).RemoteHostIP, vbGreen, ":", vbWhite, wsBot(x).RemotePort
 End Sub
 
 Private Sub wsServer_Error(ByVal Number As Integer, Description As String, ByVal Scode As Long, ByVal source As String, ByVal HelpFile As String, ByVal HelpContext As Long, CancelDisplay As Boolean)
