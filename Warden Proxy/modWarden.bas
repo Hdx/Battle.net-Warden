@@ -120,20 +120,19 @@ Public Sub TestCRev()
     Dim lChecksum As Long
     Dim sResult   As String
     Dim I         As Integer
-    
+     
     
     sResult = String$(crev_max_result, Chr$(0))
     
     lRet = check_revision(sFileTime, sFileName, sSeed, App.Path & "\CheckRevision.ini", "CRev_SC", lVersion, lChecksum, sResult)
     I = InStr(1, sResult, Chr$(0))
-    sResult = Left$(sResult, I)
+    If (I > 0) Then sResult = Left$(sResult, I - 1)
     
     Debug.Print StringFormat("Return:     {0}", lRet)
     Debug.Print StringFormat("Version:    0x{0} 0x01100101", ZeroOffset(lVersion, 8))
     Debug.Print StringFormat("Checksum:   0x{0} 0x5E6B533E", ZeroOffset(lChecksum, 8))
     Debug.Print StringFormat("Result:     {0}", StrToHex(sResult, True))
     Debug.Print StringFormat("            63AD811B448929FF407C549D81859F3E")
-
 End Sub
 '======================================================================================================
 Public Sub WardenCleanup(Instance As Long)

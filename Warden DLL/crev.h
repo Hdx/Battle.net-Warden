@@ -8,13 +8,17 @@
 #include "crevlockdown.h"
 
 typedef enum{
-    CREV_SUCCESS = 0,      //If everything went ok
-	CREV_UNKNOWN_VERSION,  //Unknown version, Not lockdown, Or Ver
-	CREV_UNKNOWN_REVISION, //Unknown Revision (0-7 for old, 0-19 for lockdown)
-	CREV_MALFORMED_SEED,   //If the Seed passed in wasn't able to be translated properly
-	CREV_MISSING_FILENAME, //We were not able to get the file path information from the INI file, Result holds more info.
-	CREV_MISSING_FILE,     //Was not able to open a file, Result has the File Path
-	CREV_FILE_INFO_ERROR,  //And error while trying to get the file info string, Result holds the path of the file
+    CREV_SUCCESS = 0,         //If everything went ok
+	CREV_UNKNOWN_VERSION,     //Unknown version, Not lockdown, Or Ver
+	CREV_UNKNOWN_REVISION,    //Unknown Revision (0-7 for old, 0-19 for lockdown)
+	CREV_MALFORMED_SEED,      //If the Seed passed in wasn't able to be translated properly
+	CREV_MISSING_FILENAME,    //We were not able to get the file path information from the INI file, Result holds more info.
+	CREV_MISSING_FILE,        //Was not able to open a file, Result has the File Path
+	CREV_FILE_INFO_ERROR,     //And error while trying to get the file info string, Result holds the path of the file
+	CREV_TOFEW_RVAS,          //If there are < 14 RVAs in the file for lockdown
+	CREV_UNKNOWN_RELOC_TYPE,  //If the Reloc type is not 16, 32, or 64 bit
+	CREV_OUT_OF_MEMORY,       //If we've run out of memory...
+	CREV_CORRUPT_IMPORT_DATA, //The Import Address Table was corrupt
 	CREV_MAX = 0xffffffff
 };
 

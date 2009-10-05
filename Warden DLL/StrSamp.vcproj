@@ -249,6 +249,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\pe.c"
+				>
+			</File>
+			<File
 				RelativePath=".\rc4.c"
 				>
 			</File>
@@ -307,6 +311,10 @@
 			</File>
 			<File
 				RelativePath=".\module.h"
+				>
+			</File>
+			<File
+				RelativePath=".\pe.h"
 				>
 			</File>
 			<File

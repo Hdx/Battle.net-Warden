@@ -24,14 +24,18 @@ uint32_t __stdcall check_revision(uint8_t *archive_time, uint8_t *archive_name, 
 uint32_t  __stdcall crev_error_description(uint32_t error, uint8_t *buffer, uint32_t size){
 	uint8_t *message;
 	switch(error){
-		case CREV_SUCCESS:          message = "Success"; break;
-		case CREV_UNKNOWN_VERSION:  message = "Unsupported archive version"; break;
-		case CREV_UNKNOWN_REVISION: message = "Unsupported archive sub-version"; break;
-		case CREV_MALFORMED_SEED:   message = "Seed value was malformed"; break;
-		case CREV_MISSING_FILENAME: message = "File name missing from INI file"; break;
-		case CREV_MISSING_FILE:     message = "Failed to open file"; break;
-		case CREV_FILE_INFO_ERROR:  message = "Failed to get executable information"; break;
-		default:                    message = "Unknown Error Code"; break;
+		case CREV_SUCCESS:             message = "Success"; break;
+		case CREV_UNKNOWN_VERSION:     message = "Unsupported archive version"; break;
+		case CREV_UNKNOWN_REVISION:    message = "Unsupported archive sub-version"; break;
+		case CREV_MALFORMED_SEED:      message = "Seed value was malformed"; break;
+		case CREV_MISSING_FILENAME:    message = "File name missing from INI file"; break;
+		case CREV_MISSING_FILE:        message = "Failed to open file"; break;
+		case CREV_FILE_INFO_ERROR:     message = "Failed to get executable information"; break;
+		case CREV_TOFEW_RVAS:          message = "Less then 14 RVAs in Hash file"; break;
+		case CREV_UNKNOWN_RELOC_TYPE:  message = "Encountered Unknown Reloc Table Type"; break;
+		case CREV_OUT_OF_MEMORY:       message = "Out of Memory"; break;
+		case CREV_CORRUPT_IMPORT_DATA: message = "Currupt Import Address Table Data"; break;
+		default:                       message = "Unknown Error Code"; break;
 	}
 	if(strlen(message) > size) return strlen(message);
 

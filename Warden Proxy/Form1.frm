@@ -64,7 +64,6 @@ Begin VB.Form frmMain
       _ExtentY        =   1296
       _Version        =   393217
       BackColor       =   0
-      Enabled         =   -1  'True
       ReadOnly        =   -1  'True
       ScrollBars      =   2
       Appearance      =   0
@@ -186,7 +185,7 @@ End Sub
 
 Private Sub Form_load()
   TestCRev
-  End
+ ' End
 '  With IconData
 '    .cbSize = Len(IconData)
 '    .hIcon = Me.Icon
