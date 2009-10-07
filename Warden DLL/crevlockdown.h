@@ -33,7 +33,6 @@ uint32_t lockdown_sha1_pad(sha1_context *ctx, uint32_t length);
 
 uint32_t lockdown_proc_reloc(uint32_t pe_file, lockdown_heep *ctx);
 uint32_t lockdown_proc_import(uint32_t pe_file, lockdown_heep *ctx);
-//uint32_t lockdown_hash1(sha1_context *sha, lockdown_heep *ldh, uint32_t pe_file, uint32_t section, uint32_t section_alignment, uint32_t baseaddr, uint32_t seed);
 uint32_t lockdown_hash1(sha1_context *sha, lockdown_heep *ldh, uint32_t section_ptr, uint32_t pe_file, uint32_t seed);
 void lockdown_hash2(sha1_context *ctx, uint32_t pe_file, uint32_t *heep_data, uint32_t ptr_memory, uint32_t seed);
 #endif

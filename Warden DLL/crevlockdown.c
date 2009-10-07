@@ -18,13 +18,44 @@ uint8_t *tto_hex(uint8_t *data, uint32_t size, BOOLEAN spaces){
 	return buff;
 }*/
 
+void combine_paths(uint8_t *folder, uint8_t *file, uint8_t *buff, uint32_t size){
+	uint32_t lret;
+	uint32_t x;
+	uint32_t fLen;
+	uint8_t *directory = safe_malloc(MAX_PATH);
+
+	directory[0] = 0;
+	if(strstr(folder, ":\\") == NULL){
+		lret = GetModuleFileName(NULL, directory, MAX_PATH); //Get App.Path
+
+		for(x = lret; x > 0; x--){ //Strip out the EXE name
+			if(directory[x] == '\\' || directory[x] == '/'){
+				directory[x] = 0;
+				break;
+			}
+		}
+	}
+
+	if(folder[0] == '\\' || folder[0] == '/') folder++; //Remove leading \ or /
+	fLen = strlen(folder);
+	if(fLen > 0 && (folder[fLen - 1] == '\\' || folder[fLen - 1] == '/')) folder[fLen - 1] = 0; //Remove Trailing / or \
+
+
+	if(directory[0] != 0)
+		sprintf_s(buff, size, "%s\\%s\\%s", directory, folder, (file == NULL ? '\x00' : file));
+	else
+		sprintf_s(buff, size, "%s\\%s", folder, (file == NULL ? '\x00' : file));
+
+	free(directory);
+}
+
 uint32_t __stdcall crev_ver3(uint8_t *archive_time, uint8_t *archive_name, uint8_t *seed, uint8_t *ini_file, uint8_t *ini_header, uint32_t *version, uint32_t *checksum, uint8_t *result){
 	uint32_t                 x = 0;
 	uint32_t                 y = 0;
 	uint32_t                 z = 0;
 	uint32_t                 lret;
 	uint8_t                 *files[5];
-	uint8_t                 *tok;
+	//uint8_t                 *tok;
 	uint8_t                 *buff;
 	uint8_t                 *buff2;
 	uint32_t                 archive_rev = 0;
@@ -42,7 +73,6 @@ uint32_t __stdcall crev_ver3(uint8_t *archive_time, uint8_t *archive_name, uint8
 		0x378D8D8C, 0x07F8E083, 0xB0EE9741, 0x7923C9AF, 0xCA11A05E, 
 		0xD723C016, 0xFD545590, 0xFB600C2E, 0x684C8785, 0x58BEDE0B
 	};
-
 	sha.version = lSHA1;
 	sha1_reset(&sha);
 	
@@ -58,14 +88,7 @@ uint32_t __stdcall crev_ver3(uint8_t *archive_time, uint8_t *archive_name, uint8
 	read_ini_new(ini_file, ini_header, "Path", "", buff, MAX_PATH);
 	files[0] = safe_malloc(MAX_PATH);
 	
-	if(strstr(buff, ":\\") == NULL){
-		tok = safe_malloc(MAX_PATH);
-		GetCurrentDirectory(MAX_PATH, tok);
-		sprintf_s(files[0], MAX_PATH, "%s\\%s", tok, buff);
-		free(tok);
-	}else{
-		sprintf_s(files[0], MAX_PATH, buff);
-	}
+	combine_paths(buff, "", files[0], MAX_PATH);
 
 	for(x = 1; x < 5; x++){
 		read_ini_new(ini_file, ini_header, (uint8_t*)keys[x-1], "\xFF", buff, MAX_PATH);
@@ -77,19 +100,13 @@ uint32_t __stdcall crev_ver3(uint8_t *archive_time, uint8_t *archive_name, uint8
 			return CREV_MISSING_FILENAME;
 		}
 		files[x] = safe_malloc(MAX_PATH);
-		sprintf_s(files[x], MAX_PATH, "%s\\%s", files[0], buff);
+		combine_paths(files[0], buff, files[x], MAX_PATH);
 	}
 
 	read_ini_new(ini_file, "CRev_Main", "LockdownPath", "", buff, MAX_PATH);
-	
-	if(strstr(buff, ":\\") == NULL){
-		tok = safe_malloc(MAX_PATH);
-		GetCurrentDirectory(MAX_PATH, tok);
-		sprintf_s(files[0], MAX_PATH, "%s\\%s\\lockdown-IX86-%02d.dll", tok, buff, archive_rev);
-		free(tok);
-	}else{
-		sprintf_s(files[0], MAX_PATH, "%s\\lockdown-IX86-%02d.dll", buff, archive_rev);
-	}
+
+	combine_paths(buff, "", files[0], MAX_PATH);
+	sprintf_s(files[0], MAX_PATH, "%s\\Lockdown-IX86-%02d.dll", files[0], archive_rev);
 	free(buff);
 
 	lockdown_shuffle_seed(seed);
