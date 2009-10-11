@@ -76,14 +76,7 @@ uint32_t __stdcall crev_old(uint32_t padd, uint8_t archive_ver, uint8_t *seed, u
 
 	read_ini_new(ini_file, ini_header, "Path", "", buff, MAX_PATH);
 	files[0] = safe_malloc(MAX_PATH);
-	
-	if(strstr(buff, ":\\") == NULL){
-		tok = safe_malloc(MAX_PATH);
-		GetCurrentDirectory(MAX_PATH, tok);
-		sprintf_s(files[0], MAX_PATH, "%s\\%s", tok, buff);
-	}else{
-		sprintf_s(files[0], MAX_PATH, buff);
-	}
+	combine_paths(buff, "", files[0], MAX_PATH);
 
 	for(x = 1; x < 4; x++){
 		read_ini_new(ini_file, ini_header, (uint8_t*)keys[x-1], "\xFF", buff, MAX_PATH);
@@ -93,8 +86,9 @@ uint32_t __stdcall crev_old(uint32_t padd, uint8_t archive_ver, uint8_t *seed, u
 			sprintf_s(result, crev_max_result(), "%s\x00", keys[x-1]);
 			return CREV_MISSING_FILENAME;
 		}
+
 		files[x] = safe_malloc(MAX_PATH);
-		sprintf_s(files[x], MAX_PATH, "%s%s", files[0], buff);
+		combine_paths(files[0], buff, files[x], MAX_PATH);
 	}
 	free(buff);
 	/*

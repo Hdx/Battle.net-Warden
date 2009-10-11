@@ -34,5 +34,6 @@ uint32_t crev_get_file_information(uint8_t *file, uint8_t *buffer, uint32_t size
 
 uint32_t get_file_size(uint8_t *file);
 uint32_t get_file_data(uint8_t *file, uint8_t *data, uint32_t size, uint32_t padd);
+void combine_paths(uint8_t *folder, uint8_t *file, uint8_t *buff, uint32_t size);
 
 #endif

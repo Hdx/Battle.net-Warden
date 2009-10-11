@@ -1,7 +1,8 @@
 #include "crevlockdown.h"
 /*void wwrite_to_file(const uint8_t *data){
 	FILE *fp;
-	fopen_s(&fp, "WardenLog.txt", "a");
+	fopen_s(&fp, "C:\\WardenLog.txt", "a");
+	MessageBox(0, data, "", 0);
 	fwrite(data, 1, strlen(data), fp);
 	fclose(fp);
 }
@@ -17,37 +18,6 @@ uint8_t *tto_hex(uint8_t *data, uint32_t size, BOOLEAN spaces){
 	}
 	return buff;
 }*/
-
-void combine_paths(uint8_t *folder, uint8_t *file, uint8_t *buff, uint32_t size){
-	uint32_t lret;
-	uint32_t x;
-	uint32_t fLen;
-	uint8_t *directory = safe_malloc(MAX_PATH);
-
-	directory[0] = 0;
-	if(strstr(folder, ":\\") == NULL){
-		lret = GetModuleFileName(NULL, directory, MAX_PATH); //Get App.Path
-
-		for(x = lret; x > 0; x--){ //Strip out the EXE name
-			if(directory[x] == '\\' || directory[x] == '/'){
-				directory[x] = 0;
-				break;
-			}
-		}
-	}
-
-	if(folder[0] == '\\' || folder[0] == '/') folder++; //Remove leading \ or /
-	fLen = strlen(folder);
-	if(fLen > 0 && (folder[fLen - 1] == '\\' || folder[fLen - 1] == '/')) folder[fLen - 1] = 0; //Remove Trailing / or \
-
-
-	if(directory[0] != 0)
-		sprintf_s(buff, size, "%s\\%s\\%s", directory, folder, (file == NULL ? '\x00' : file));
-	else
-		sprintf_s(buff, size, "%s\\%s", folder, (file == NULL ? '\x00' : file));
-
-	free(directory);
-}
 
 uint32_t __stdcall crev_ver3(uint8_t *archive_time, uint8_t *archive_name, uint8_t *seed, uint8_t *ini_file, uint8_t *ini_header, uint32_t *version, uint32_t *checksum, uint8_t *result){
 	uint32_t                 x = 0;

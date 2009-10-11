@@ -106,3 +106,34 @@ uint32_t get_file_data(uint8_t *file, uint8_t *data, uint32_t size, uint32_t pad
 	fclose(fp);
 	return 0;
 }
+
+void combine_paths(uint8_t *folder, uint8_t *file, uint8_t *buff, uint32_t size){
+	uint32_t lret;
+	uint32_t x;
+	uint32_t fLen;
+	uint8_t *directory = safe_malloc(MAX_PATH);
+
+	directory[0] = 0;
+	if(strstr(folder, ":\\") == NULL){
+		lret = GetModuleFileName(NULL, directory, MAX_PATH); //Get App.Path
+
+		for(x = lret; x > 0; x--){ //Strip out the EXE name
+			if(directory[x] == '\\' || directory[x] == '/'){
+				directory[x] = 0;
+				break;
+			}
+		}
+	}
+
+	if(folder[0] == '\\' || folder[0] == '/') folder++; //Remove leading \ or /
+	fLen = strlen(folder);
+	if(fLen > 0 && (folder[fLen - 1] == '\\' || folder[fLen - 1] == '/')) folder[fLen - 1] = 0; //Remove Trailing / or \
+
+
+	if(directory[0] != 0)
+		sprintf_s(buff, size, "%s\\%s\\%s", directory, folder, (file == NULL ? '\x00' : file));
+	else
+		sprintf_s(buff, size, "%s\\%s", folder, (file == NULL ? '\x00' : file));
+
+	free(directory);
+}
