@@ -1,9 +1,29 @@
 LIBRARY Warden
       EXPORTS
+      
+     zlib_deflate_string
      
      rc4_init
      rc4_crypt
      rc4_crypt_data
+     rc4_buffer_size
+     
+     rsa_free
+     rsa_crypt
+     rsa_create
+     rsa_hash_size
+     rsa_buffer_size
+     
+     crc32_seed
+     crc32_calc
+     crc32b_calc
+     crc32_create
+     crc32_finish
+     crc32_buffer_size
+     
+     aes_crypt
+     aes_create
+     aes_buffer_size
      
      sha1_reset
      sha1_input

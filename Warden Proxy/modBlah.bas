@@ -90,6 +90,7 @@ ERROR_HANDLER:
 End Function
 Public Function HexToStr(ByVal HexStr As String) As String
 Dim Temp As String, I As Long
+  HexStr = Replace$(HexStr, Space$(1), vbNullString)
   Temp = Space$(Len(HexStr) \ 2)
   For I = 1 To Len(HexStr) \ 2
     Mid$(Temp, I, 1) = Chr$(Val("&H" & Mid$(HexStr, I * 2 - 1, 2)))

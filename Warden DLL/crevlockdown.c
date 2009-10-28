@@ -601,7 +601,7 @@ void lockdown_heep_cleanup(lockdown_heep *ctx){
 	ctx->max_len = 0;
 	ctx->mem     = NULL;
 }
-static int lockdown_heep_sortfunc(const void *record1, const void *record2){
+static int __stdcall lockdown_heep_sortfunc(const void *record1, const void *record2){
         int *a = (uint32_t*) record1;
         int *b = (uint32_t*) record2;
 

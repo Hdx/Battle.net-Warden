@@ -143,6 +143,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="C:\OpenSSL\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;STRSAMP_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -168,10 +169,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="zdll.lib Version.lib"
+				AdditionalDependencies="zdll.lib Version.lib libeay32.lib"
 				OutputFile="..\Warden Proxy\Warden.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="C:\OpenSSL\lib"
 				ModuleDefinitionFile=".\Warden.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/Warden.pdb"
@@ -213,11 +215,19 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
+				RelativePath=".\aes.c"
+				>
+			</File>
+			<File
 				RelativePath=".\buffer.c"
 				>
 			</File>
 			<File
 				RelativePath=".\config.c"
+				>
+			</File>
+			<File
+				RelativePath=".\crc32.c"
 				>
 			</File>
 			<File
@@ -257,6 +267,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\rsa.c"
+				>
+			</File>
+			<File
 				RelativePath=".\sha1.c"
 				>
 			</File>
@@ -272,17 +286,29 @@
 				RelativePath=".\Warden.def"
 				>
 			</File>
+			<File
+				RelativePath=".\zlib_exp.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
+				RelativePath=".\aes.h"
+				>
+			</File>
+			<File
 				RelativePath=".\buffer.h"
 				>
 			</File>
 			<File
 				RelativePath=".\config.h"
+				>
+			</File>
+			<File
+				RelativePath=".\crc32.h"
 				>
 			</File>
 			<File
@@ -322,6 +348,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\rsa.h"
+				>
+			</File>
+			<File
 				RelativePath=".\sha1.h"
 				>
 			</File>
@@ -331,6 +361,10 @@
 			</File>
 			<File
 				RelativePath=".\warden.h"
+				>
+			</File>
+			<File
+				RelativePath=".\zlib_exp.h"
 				>
 			</File>
 		</Filter>

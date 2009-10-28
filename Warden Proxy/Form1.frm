@@ -1,7 +1,7 @@
 VERSION 5.00
 Object = "{248DD890-BB45-11CF-9ABC-0080C7E7B78D}#1.0#0"; "MSWINSCK.OCX"
 Object = "{3B7C8863-D78F-101B-B9B5-04021C009402}#1.2#0"; "RICHTX32.OCX"
-Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "msinet.ocx"
+Object = "{48E59290-9880-11CF-9754-00AA00C00908}#1.0#0"; "MSINET.OCX"
 Begin VB.Form frmMain 
    Caption         =   "Hdx Warden Proxy"
    ClientHeight    =   4995
@@ -23,14 +23,6 @@ Begin VB.Form frmMain
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   744
    StartUpPosition =   3  'Windows Default
-   Begin VB.CommandButton Command1 
-      Caption         =   "Command1"
-      Height          =   480
-      Left            =   5040
-      TabIndex        =   1
-      Top             =   2280
-      Width           =   2370
-   End
    Begin MSWinsockLib.Winsock wsBot 
       Index           =   0
       Left            =   6960
@@ -64,6 +56,7 @@ Begin VB.Form frmMain
       _ExtentY        =   1296
       _Version        =   393217
       BackColor       =   0
+      Enabled         =   -1  'True
       ReadOnly        =   -1  'True
       ScrollBars      =   2
       Appearance      =   0
@@ -175,17 +168,13 @@ Private Sub ParseWebInfo(sData As String)
   Next x
 End Sub
 
-Private Sub Command1_Click()
-TestCRev
-End Sub
-
 Private Sub Form_Activate()
     Call Shell_NotifyIcon(NIM_ADD, IconData)
 End Sub
 
 Private Sub Form_load()
-  TestCRev
- ' End
+  Test
+  End
 '  With IconData
 '    .cbSize = Len(IconData)
 '    .hIcon = Me.Icon

@@ -10,7 +10,22 @@ void SWAP(uint8_t *a, uint8_t *b){
   *b = t;
 }
 
-void __stdcall rc4_init(uint8_t *key_buffer, uint8_t *base, uint32_t base_length){
+void __stdcall rc4_init(struct RC4_KEY *key, uint8_t *base, uint32_t base_length){
+	RC4_set_key((RC4_KEY*)key, base_length, base);
+}
+
+void __stdcall rc4_crypt(struct RC4_KEY *key, uint8_t *data, uint32_t length){
+	uint8_t *out_data = safe_malloc(length);
+	RC4((RC4_KEY*)key, length, (const char *)data, out_data);
+	memcpy(data, out_data, length);
+	free(out_data);
+}
+
+uint32_t __stdcall rc4_buffer_size(){
+	return sizeof(RC4_KEY);
+}
+
+void __stdcall rc4_init_old(uint8_t *key_buffer, uint8_t *base, uint32_t base_length){
   uint8_t val = 0;
   uint32_t position = 0;
   uint32_t i;
@@ -36,7 +51,7 @@ void __stdcall rc4_init(uint8_t *key_buffer, uint8_t *base, uint32_t base_length
   }
 }
 
-void __stdcall rc4_crypt(uint8_t *key, uint8_t *data, uint32_t length){
+void __stdcall rc4_crypt_old(uint8_t *key, uint8_t *data, uint32_t length){
   uint32_t i;
   for(i = 0; i < length; i++){
     key[0x100]++;
@@ -45,11 +60,14 @@ void __stdcall rc4_crypt(uint8_t *key, uint8_t *data, uint32_t length){
     data[i] ^= key[(key[key[0x101]] + key[key[0x100]]) & 0x0FF];
   }
 }
+uint32_t __stdcall rc4_buffer_size_old(){
+    return 0x102;
+}
 
 void __stdcall rc4_crypt_data(uint8_t *data, uint32_t data_length, uint8_t *base, uint32_t base_length){
-  uint8_t key[0x102];
-	rc4_init(key, base, base_length);
-	rc4_crypt(key, data, data_length);
+	RC4_KEY key;
+	rc4_init((struct RC4_KEY*)&key, base, base_length);
+	rc4_crypt((struct RC4_KEY*)&key, data, data_length);
 }
 
 #endif

@@ -37,28 +37,40 @@ Private Type MedivRandomContext
   Source2(0 To 19) As Byte
 End Type
 
-Private Declare Sub rc4_init Lib "Warden.dll" (ByVal Key As String, ByVal Base As String, ByVal length As Long)
-Private Declare Sub rc4_crypt Lib "Warden.dll" (ByVal Key As String, ByVal Data As String, ByVal length As Long)
+Private Declare Sub rc4_init Lib "Warden.dll" (ByVal Key As String, ByVal Base As String, ByVal Length As Long)
+Private Declare Sub rc4_crypt Lib "Warden.dll" (ByVal Key As String, ByVal Data As String, ByVal Length As Long)
 Private Declare Sub rc4_crypt_data Lib "Warden.dll" (ByVal Data As String, ByVal DataLength As Long, ByVal Base As String, ByVal BaseLength As Long)
+Private Declare Function rc4_buffer_size Lib "Warden.dll" () As Long
+
+Private Declare Function rsa_create Lib "Warden.dll" (ByVal RSA As String, ByVal CreateType As Long, ByVal KeyData As String) As Long
+Private Declare Function rsa_hash Lib "Warden.dll" (ByVal RSA As String, ByVal HashType As Long, ByVal Padding As Long, ByVal Data As String, ByVal DataLength As Long, ByVal Buffer As String) As Long
+Private Declare Function rsa_hash_size Lib "Warden.dll" (ByVal RSA As String) As Long
+Private Declare Function rsa_buffer_size Lib "Warden.dll" () As Long
+'Private Declare Sub rsa_free Lib "Warden.dll" (ByVal RSA As String)
+
+Private Declare Function aes_buffer_size Lib "Warden.dll" () As Long
+Private Declare Function aes_create Lib "Warden.dll" (ByVal Key As String, ByVal KeyType As Long, ByVal Seed As String, ByVal Length As Long) As Long
+Private Declare Function aes_crypt Lib "Warden.dll" (ByVal Key As String, ByVal CryptType As Long, ByVal Encrypt As Long, ByVal InitVec As String, ByVal Length As Long, ByVal Data As String, ByVal Buffer As String) As Long
+
 
 Private Declare Function sha1_reset Lib "Warden.dll" (ByRef Context As SHA1Context) As Long
-Private Declare Function sha1_input Lib "Warden.dll" (ByRef Context As SHA1Context, ByVal Data As String, ByVal length As Long) As Long
+Private Declare Function sha1_input Lib "Warden.dll" (ByRef Context As SHA1Context, ByVal Data As String, ByVal Length As Long) As Long
 Private Declare Function sha1_digest Lib "Warden.dll" (ByRef Context As SHA1Context, ByVal digest As String) As Long
-Private Declare Function sha1_checksum Lib "Warden.dll" (ByVal Data As String, ByVal length As Long, ByVal Version As Long) As Long
+Private Declare Function sha1_checksum Lib "Warden.dll" (ByVal Data As String, ByVal Length As Long, ByVal Version As Long) As Long
 
 Private Declare Function md5_reset Lib "Warden.dll" (ByRef Context As MD5Context) As Long
-Private Declare Function md5_input Lib "Warden.dll" (ByRef Context As MD5Context, ByVal Data As String, ByVal length As Long) As Long
+Private Declare Function md5_input Lib "Warden.dll" (ByRef Context As MD5Context, ByVal Data As String, ByVal Length As Long) As Long
 Private Declare Function md5_digest Lib "Warden.dll" (ByRef Context As MD5Context, ByVal digest As String) As Long
-Private Declare Function md5_verify_data Lib "Warden.dll" (ByVal Data As String, ByVal length As Long, ByVal CorrectMD5 As String) As Boolean
+Private Declare Function md5_verify_data Lib "Warden.dll" (ByVal Data As String, ByVal Length As Long, ByVal CorrectMD5 As String) As Boolean
 
-Private Declare Sub mediv_random_init Lib "Warden.dll" (ByRef Context As MedivRandomContext, ByVal Seed As String, ByVal length As Long)
-Private Declare Sub mediv_random_get_bytes Lib "Warden.dll" (ByRef Context As MedivRandomContext, ByVal Buffer As String, ByVal length As Long)
+Private Declare Sub mediv_random_init Lib "Warden.dll" (ByRef Context As MedivRandomContext, ByVal Seed As String, ByVal Length As Long)
+Private Declare Sub mediv_random_get_bytes Lib "Warden.dll" (ByRef Context As MedivRandomContext, ByVal Buffer As String, ByVal Length As Long)
 
 Private Declare Function warden_init Lib "Warden.dll" (ByVal SocketHandle As Long) As Long
-Private Declare Function warden_data Lib "Warden.dll" (ByVal Instance As Long, ByVal Direction As Long, ByVal PacketID As Long, ByVal Data As String, ByVal length As Long) As Long
+Private Declare Function warden_data Lib "Warden.dll" (ByVal Instance As Long, ByVal Direction As Long, ByVal PacketID As Long, ByVal Data As String, ByVal Length As Long) As Long
 Private Declare Function warden_cleanup Lib "Warden.dll" (ByVal Instance As Long) As Long
 Private Declare Function warden_config Lib "Warden.dll" (ByVal Instance As Long, ByVal ConfigBit As Long, ByVal Enabled As Byte) As Long
-Private Declare Function warden_set_data_file Lib "Warden.dll" (ByVal Instance As Long, ByVal FilePath As String, ByVal length As Long) As Long
+Private Declare Function warden_set_data_file Lib "Warden.dll" (ByVal Instance As Long, ByVal FilePath As String, ByVal Length As Long) As Long
 
 Private Const WARDEN_SEND              As Long = &H0
 Private Const WARDEN_RECV              As Long = &H1
@@ -104,35 +116,62 @@ Private Declare Function check_revision Lib "Warden.dll" ( _
 Private Declare Function crev_max_result Lib "Warden.dll" () As Long
 Private Declare Function crev_error_description Lib "Warden.dll" (ByVal ErrorCode As Long, ByVal Description As String, ByVal Size As Long) As Long
 
-Public Sub TestCRev()
-    Dim sFileTime As String
-    Dim sFileName As String
-    Dim sSeed     As String
-    sFileTime = HexToStr("005E2002705FC701")
-    sFileName = "lockdown-IX86-07.mpq"
-    sSeed = HexToStr("03E3321E7CFD23EDAE2E39196EA26D81")
-    'Version  = 0x01100101
-    'Checksum = 0x5E6B533E
-    'Result   = 63AD811B448929FF407C549D81859F3E
+Private Const GSP_PRIVATE_KEY As String = "MIIEogIBAAKCAQEA3XK9BWuIHIS3R6za4WU/mQ0WlsPD/ErtzSTw2ZmbhI0lyKcQ" & vbNewLine & _
+                                          "Ugk0aRIOaq4vTE+EpRtI6hvhH4AIm+15sWPqxpfuNR0Dvigse+BhuypFsqI+AWiL" & vbNewLine & _
+                                          "dj5RrPSzrLcqWgjE5zSjUG4OmxS4NJJRY9UMNaEhtqsrgrFFj4iMX07bz6Joyp85" & vbNewLine & _
+                                          "CHpGJhmFjPwU60OlUkGKwvs6TeQXUZlH9ypzXkNAhF4uDchTgEX7A/8yrqHzPx7/" & vbNewLine & _
+                                          "r2T0Lww7kp106ACdy9wXTpq5v3tmfNZbZ7K0bEB4g8Ez43Hew1P5b/tabUV4pZL0" & vbNewLine & _
+                                          "LkvDCA78ll8FHeuJjZA3+DKlEgyA2EWTs98VTQIDAQABAoIBAC65evCd08ZQqmtR" & vbNewLine & _
+                                          "KY3NUzHz9QQyojOli69xT/BZ3NqG/aXsuiDVGF3jFW+k+Q3c6Vv8+dGLuGBxH1/n" & vbNewLine & _
+                                          "J3oqXuswO26xhIym5Vvt6DEZpkMewH6DlImKdKlNqGuU6ja9Cu7NyHe8ARDvuj49" & vbNewLine & _
+                                          "cTbjSQQ3z2k/jJqy1L6ITTX+6ZpRgZd9m/Ng5O0GBcoSiUjysfLgs5m5lHWCojL+" & vbNewLine & _
+                                          "ppxqhsWXDM2ejIFGncGok798NNps+OkAM9EwEHcEI7qBo/UEsgXwnmlUvsyBvtq3" & vbNewLine & _
+                                          "7NS/znsJlOT/PfbS3i0gIac6AmA0qh86zN+uC5yl44aY+WpwPqBua6eeKkpk3xAo" & vbNewLine & _
+                                          "LrCRxHECgYEA/689gaRf0ihJ5WpD/cq6XLFwxuu4/CmmNjYpTwol2S3lGnq03RLZ" & vbNewLine & _
+                                          "FhklvMKIkhfuaOLyrHgUWaYZVr2KBUU81qwHTVEZeN6rWPeXTsfgBnpShIYYXqBN" & vbNewLine & _
+                                          "ePyqVDuISs44Lsi74fhSNrqai6ow6GQYlZewcdjS2zVc35G1of/cWNMCgYEA3biv" & vbNewLine & _
+                                          "L49okrATQfBbdl5L6hueqNc8pfrv6EKYcw5SE48fFeHCToorKpaf4kf7GemITldD" & vbNewLine & _
+                                          "29FFwukhyt1rJJI9Kvj6jKN49QZr3xS1d8QY0lOHnRRRLIg3x+VaD7RYOWuHbqs1" & vbNewLine & _
+                                          "MKyzgeKkpWq6EkuaW2ZEQwL6cvzqGsbo1CRqBV8CgYBMNqEf1q5VR3sXbkCMEvTQ" & vbNewLine & _
+                                          "EngqYzNFvuhzelt/2ueDQCHtbawhxa993csY4+evnICNNTDe5gAy5MbiyyasAYJr" & vbNewLine & _
+                                          "/uVCT61HESCEKXEpo3yMkcOtCweSlTfim3XuG7y5h5TJpT4T0mA3PhI5FWb0rnmB" & vbNewLine & _
+                                          "hbCrjtTzUIm5foZkno7AzwKBgD2PTXSTCKHRqUchiQNwYvt497BBMmGTLpD6DIHF" & vbNewLine & _
+                                          "dBxiHGti5yQPULTeZT3aZmlnYaT+raSWkhvvxqYgm+Lnh3wq7MWnjanaQpEJmujJ" & vbNewLine & _
+                                          "1WpwLrL6NR98IqCpmTvLAsPOiye6+WWuTZi+aKBU5Zy2yQCfgExqw0ax2f3dRD/C" & vbNewLine & _
+                                          "bH1ZAoGAOJ/pLNpetFyE/aaD0jBfMA6UACdutjWT4vFGmk/GwBh3/sHoMbON2c/P" & vbNewLine & _
+                                          "OeEM/N3/ZODOZHzXB1ALgWIjeoP2TegBfbniHf2d+j1/VRMTiYEMv3ws06YiWMLJ" & vbNewLine & _
+                                          "ioX2ZNntCCPlIti48TeFs0etqcHQgQ5rSLblyde3RIuRcqatQko="
 
-    Dim lRet      As Long
-    Dim lVersion  As Long
-    Dim lChecksum As Long
-    Dim sResult   As String
-    Dim I         As Integer
-     
+Public Sub Test()
+    Dim RSASize As Long
+    Dim AES     As String
+    Dim lRet    As Long
+    Dim Hash    As String
+    Dim Data    As String
+    Dim Seed    As String
+    Dim IV      As String
+    Seed = HexToStr("95A8EE8E89979B9EFDCBC6EB9797528D")
+    IV = String$(16, Chr$(0))
+    Data = HexToStr("4EC137A426DABF8AA0BEB8BC0C2B89D6")
     
-    sResult = String$(crev_max_result, Chr$(0))
+    lRet = aes_buffer_size
+    Debug.Print "AES Size: " & lRet
     
-    lRet = check_revision(sFileTime, sFileName, sSeed, App.Path & "\CheckRevision.ini", "CRev_SC", lVersion, lChecksum, sResult)
-    I = InStr(1, sResult, Chr$(0))
-    If (I > 0) Then sResult = Left$(sResult, I - 1)
+    AES = String$(lRet, Chr$(0))
+    lRet = aes_create(AES, 1, Seed, Len(Seed))
+    Debug.Print "AES Create: " & lRet
+    'Debug.Print "AES: "
+    'Debug.Print DebugOutput(AES)
     
-    Debug.Print StringFormat("Return:     {0}", lRet)
-    Debug.Print StringFormat("Version:    0x{0} 0x01100101", ZeroOffset(lVersion, 8))
-    Debug.Print StringFormat("Checksum:   0x{0} 0x5E6B533E", ZeroOffset(lChecksum, 8))
-    Debug.Print StringFormat("Result:     {0}", StrToHex(sResult, True))
-    Debug.Print StringFormat("            63AD811B448929FF407C549D81859F3E")
+    Hash = String$(Len(Data), Chr$(0))
+    
+    lRet = aes_crypt(AES, 0, 0, IV, Len(Data), Data, Hash)
+    
+    Debug.Print "AES Hash: " & lRet
+    Debug.Print "Hash: " & DebugOutput(Hash)
+    Debug.Print "IV:   " & DebugOutput(IV)
+    
+    
 End Sub
 '======================================================================================================
 Public Sub WardenCleanup(Instance As Long)

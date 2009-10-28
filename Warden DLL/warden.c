@@ -99,8 +99,11 @@ void warden_init_rc4keys(warden_instance *ctx){
 	mediv_random_get_bytes(rnd, out_seed, 0x10);
 	mediv_random_get_bytes(rnd, in_seed,  0x10);
 
-	rc4_init(ctx->out_key, out_seed, 0x10);
-	rc4_init(ctx->in_key,  in_seed,  0x10);
+	rc4_init_old(ctx->out_key, out_seed, 0x10);
+	rc4_init_old(ctx->in_key,  in_seed,  0x10);
+
+	free(out_seed);
+	free(in_seed);
 }
 
 uint32_t warden_packet(warden_instance *ctx, uint8_t *packet_data, uint32_t size){
@@ -114,7 +117,7 @@ uint32_t warden_packet(warden_instance *ctx, uint8_t *packet_data, uint32_t size
 	if(ctx->init_data != 0) 
 		memcpy((uint8_t*)(ctx->init_data + 0x122), ctx->in_key,  0x102); //Update in-key for Handle_Raw
 
-	rc4_crypt(ctx->in_key, packet_data, size);
+	rc4_crypt_old(ctx->in_key, packet_data, size);
 
 	if((ctx->config & CONFIG_LOG_PACKETS) == CONFIG_LOG_PACKETS){
 		debug = safe_malloc(0x200);
@@ -271,7 +274,7 @@ void warden_send_packet(warden_instance *ctx, const uint8_t *data, uint16_t size
 		free(debug);
 	}
 
-	rc4_crypt(ctx->out_key, pdata, (uint32_t)size);
+	rc4_crypt_old(ctx->out_key, pdata, (uint32_t)size);
 
 	size += 4;
 	send(ctx->socket_handle, "\xff\x5e", 2, 0);
@@ -341,7 +344,7 @@ uint32_t warden_load_module(warden_instance *ctx){
 		warden_save_file(ctx, 1); //Save Module
 		warden_save_file(ctx, 5); //Save Key
 		rc4_crypt_data((uint8_t*)ctx->module, ctx->module_size, ctx->module_seed, 0x10);
-		//warden_save_file(ctx, 2);
+		warden_save_file(ctx, 2);
 
 		if((*(uint32_t*)(ctx->module + ctx->module_size - 0x104)) == 'SIGN'){
 			size        = *(uint32_t*)(ctx->module);
